@@ -209,7 +209,7 @@ class Command(BaseCommand):
                     self.message(
                         f,
                         f"Champs d'état civil manquants : {','.join(missing_additional_information_fields)}",
-                        logging.WARNING,
+                        logging.INFO,
                     )
 
                 missing_address_fields = ADDRESS_FIELDS.difference(all_fields)

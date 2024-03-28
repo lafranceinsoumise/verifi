@@ -16,20 +16,18 @@ class Civilite(models.TextChoices):
 
 class Electeur(models.Model):
     commune = models.CharField("Code INSEE commune", max_length=5)
-    bureau = models.CharField("Bureau", max_length=4, blank=False)
+    bureau = models.CharField("Bureau", max_length=4)
     numero = models.IntegerField("Numéro dans la liste")
     type_liste = models.CharField(
         "Type de liste", max_length=3, choices=ListType.choices
     )
 
-    sexe = models.CharField(
-        "Civilité", max_length=1, choices=Civilite.choices, blank=True
-    )
+    sexe = models.CharField("Civilité", max_length=1, choices=Civilite.choices)
     nom = models.CharField("Nom de naissance", max_length=255)
     nom_usage = models.CharField("Nom d'usage", max_length=255, blank=True)
     prenoms = models.CharField("Prénoms", max_length=255)
 
-    date_naissance = models.DateField("Date de naissance", blank=True, null=True)
+    date_naissance = models.DateField("Date de naissance")
     commune_naissance = models.CharField(
         "Ville de naissance", max_length=255, blank=True
     )
