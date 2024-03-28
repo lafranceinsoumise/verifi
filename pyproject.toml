@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "verifi"
+version = "0.1.0"
+description = ""
+authors = ["Salomé Cheysson <salome@cheysson.fr>"]
+readme = "README.md"
+packages = [
+    { include = "*", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+django = "^5.0.3"
+psycopg2 = "^2.9.9"
+pandas = "^2.2.1"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,43 @@
+name: verifi
+
+env_file:
+  - .lando.env
+
+proxy:
+  django:
+    - verifi.ap.lfi.site
+  mailhog:
+    - verifimail.ap.lfi.site
+
+services:
+  django:
+    type: python:3.12
+    build:
+      - pip install pipx
+      - pipx install poetry
+      - pipx install python-dotenv[cli]
+    command: poetry run dotenv run ./manage.py runserver 0.0.0.0:80
+  database:
+    type: postgres:12
+    portforward: true
+    creds:
+      database: verifi
+      # impossible de changer l'utilisateur et le mdp
+      user: postgres
+      password:
+    config:
+      database: verifi
+  mailhog:
+    type: mailhog
+    portforward: true
+    hogfrom:
+    - django
+
+events:
+  pre-start:
+    - django: poetry install --sync
+
+tooling:
+  manage:
+    service: django
+    cmd: poetry run ./manage.py
