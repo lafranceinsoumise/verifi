@@ -1,21 +1,13 @@
 import csv
+import logging
 import re
 import sys
 from pathlib import Path
-import logging
-from typing import TextIO
 
 import pandas as pd
-
-from django.core.management import BaseCommand, CommandError
-import csv
-import logging
-import re
-import sys
-from pathlib import Path
-
 from django.core.management import BaseCommand, CommandError
 from pandas._typing import ReadCsvBuffer
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -31,61 +23,59 @@ FIELDNAMES_SUBS = {
     "libellé du type de liste": "type_liste",
     "nom de naissance": "nom",
     "nom d'usage": "nom_usage",
+    "prénoms": "prenoms",
     "date de naissance": "date_naissance",
-    "code du département de naissance": "dép_naissance",
     "pays de naissance": "pays_naissance",
-    "code de la commune de naissance": "com_naissance",
-    "numéro de voie": "numéro_voie",
+    "code de la commune de naissance": "commune_naissance",
+    "numéro de voie": "num_voie",
     "libellé de voie": "voie",
     "complément 1": "comp1",
     "complément 2": "comp2",
+    "lieu-dit": "lieu_dit",
     "code postal": "code_postal",
     "code du bureau de vote": "bureau",
-    "numéro d'ordre dans le bureau de vote": "num_électeur",
-    "code canton du bureau de vote": "canton",
-    "identifiant nationalité": "nationalité",
-    "code circonscription métropolitaine du bureau de vote": "circo_metro",
+    "numéro d'ordre dans le bureau de vote": "num_electeur",
+    "nationalité": "nationalite",
 }
 
 TYPE_LIST_SUBS = {
-    "LP": "LP",
-    "LCM": "LCM",
-    "LCE": "LCE",
+    "lp": "LP",
+    "lcm": "LCM",
+    "lce": "LCE",
     "liste principale": "LP",
     "liste complémentaire municipale": "LCM",
     "liste complémentaire européenne": "LCE",
 }
 
-REQUIRED_FIELDS = {
-    "commune",
+REQUIRED_FIELDS = [
+    "code_com",
     "type_liste",
     "nom",
     "nom_usage",
-    "prénoms",
+    "prenoms",
     "sexe",
     "date_naissance",
     "bureau",
-    "num_électeur",
+    "num_electeur",
     "date_export",
-}
+]
 
-ADDITIONAL_INFORMATION_FIELDS = {
-    "com_naissance",
-    "dép_naissance",
+ADDITIONAL_INFORMATION_FIELDS = [
+    "commune_naissance",
     "pays_naissance",
-    "nationalité",
-}
+    "nationalite",
+]
 
-ADDRESS_FIELDS = {
-    "numéro_voie",
+ADDRESS_FIELDS = [
+    "num_voie",
     "voie",
     "comp1",
     "comp2",
-    "lieu-dit",
+    "lieu_dit",
     "code_postal",
     "commune",
     "pays",
-}
+]
 
 DEST_HEADER = [*REQUIRED_FIELDS, *ADDITIONAL_INFORMATION_FIELDS, *ADDRESS_FIELDS]
 
@@ -129,12 +119,14 @@ class Command(BaseCommand):
 
         rep_deps = sorted(d for d in source_dir.iterdir() if d.is_dir())
 
-        for dep in rep_deps:
-            numero_dep = dep.name.split()[0]
-            logger.info(f"Traitement département N°{numero_dep}")
-            target_file = target_dir / f"{numero_dep}.csv"
-            with target_file.open("w") as fdout:
-                self.handle_dep(dep, fdout)
+        with tqdm(rep_deps, postfix={"dep": rep_deps[0].name}) as bar:
+            for dep in bar:
+                bar.set_postfix(dep=dep.name)
+                numero_dep = dep.name.split()[0]
+                logger.info(f"Traitement département N°{numero_dep}")
+                target_file = target_dir / f"{numero_dep}.csv"
+                with target_file.open("w") as fdout:
+                    self.handle_dep(dep, fdout)
 
     def trouver_separateur(self, fh):
         pos = fh.tell()
@@ -165,7 +157,7 @@ class Command(BaseCommand):
             defaults = {}
 
             if match := COM_RE.search(f.name):
-                defaults["commune"] = match.group(1)
+                defaults["code_com"] = match.group(1)
             if match := TYPE_LISTE_RE.search(f.name):
                 defaults["type_liste"] = match.group(0)
             if match := DATE_EXPORT_RE.search(f.name):
@@ -193,7 +185,7 @@ class Command(BaseCommand):
 
                 all_fields = set(names).union(defaults)
 
-                missing_required_fields = REQUIRED_FIELDS.difference(all_fields)
+                missing_required_fields = set(REQUIRED_FIELDS).difference(all_fields)
                 if missing_required_fields:
                     self.message(
                         f,
@@ -202,9 +194,9 @@ class Command(BaseCommand):
                     )
                     continue
 
-                missing_additional_information_fields = (
-                    ADDITIONAL_INFORMATION_FIELDS.difference(all_fields)
-                )
+                missing_additional_information_fields = set(
+                    ADDITIONAL_INFORMATION_FIELDS
+                ).difference(all_fields)
                 if missing_additional_information_fields:
                     self.message(
                         f,
@@ -212,7 +204,7 @@ class Command(BaseCommand):
                         logging.INFO,
                     )
 
-                missing_address_fields = ADDRESS_FIELDS.difference(all_fields)
+                missing_address_fields = set(ADDRESS_FIELDS).difference(all_fields)
                 if missing_address_fields:
                     self.message(
                         f,
@@ -224,6 +216,7 @@ class Command(BaseCommand):
                     fd,
                     delimiter=sep,
                     header=None,
+                    skiprows=1,
                     names=names,
                     usecols=[n for n in names if n in DEST_HEADER],
                     dtype={n: str for n in names},
@@ -236,9 +229,16 @@ class Command(BaseCommand):
                         else:
                             chunk[k] = v
 
-                    chunk["type_liste"] = chunk["type_liste"].map(TYPE_LIST_SUBS)
+                    # élimine le préfixe 'com' si présent
+                    chunk["code_com"] = chunk["code_com"].str.slice(-5)
 
-                    chunk.reindex(columns=DEST_HEADER).to_csv(
+                    chunk["type_liste"] = (
+                        chunk["type_liste"].str.lower().map(TYPE_LIST_SUBS)
+                    )
+
+                    chunk[
+                        chunk.bureau.notnull() & chunk.num_electeur.notnull()
+                    ].reindex(columns=DEST_HEADER).to_csv(
                         dest, index=False, header=False
                     )
 

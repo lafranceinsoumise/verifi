@@ -11,12 +11,14 @@ proxy:
 
 services:
   django:
-    type: python:3.12
+    type: python:3.11
     build:
+      - pip install -U pip
       - pip install pipx
       - pipx install poetry
       - pipx install python-dotenv[cli]
-    command: poetry run dotenv run ./manage.py runserver 0.0.0.0:80
+    command: ./.lando.sh
+
   database:
     type: postgres:12
     portforward: true

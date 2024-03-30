@@ -1,6 +1,4 @@
-from django.contrib.postgres.lookups import Unaccent
 from django.db import models
-from django.db.models.functions import Lower, Upper
 
 
 class ListType(models.TextChoices):
@@ -15,9 +13,9 @@ class Civilite(models.TextChoices):
 
 
 class Electeur(models.Model):
-    commune = models.CharField("Code INSEE commune", max_length=5)
-    bureau = models.CharField("Bureau", max_length=4)
-    numero = models.IntegerField("Numéro dans la liste")
+    code_com = models.CharField("Code INSEE commune", max_length=5)
+    bureau = models.CharField("Bureau", max_length=10)
+    num_electeur = models.IntegerField("Numéro dans la liste")
     type_liste = models.CharField(
         "Type de liste", max_length=3, choices=ListType.choices
     )
@@ -27,20 +25,21 @@ class Electeur(models.Model):
     nom_usage = models.CharField("Nom d'usage", max_length=255, blank=True)
     prenoms = models.CharField("Prénoms", max_length=255)
 
-    date_naissance = models.DateField("Date de naissance")
+    date_naissance = models.CharField("Date de naissance", max_length=10, blank=False)
+
     commune_naissance = models.CharField(
         "Ville de naissance", max_length=255, blank=True
     )
     pays_naissance = models.CharField("Pays de naissance", max_length=255, blank=True)
     nationalite = models.CharField("Nationalité", max_length=255, blank=True)
 
-    numero_voie = models.CharField("Numéro de voie", max_length=255, blank=True)
+    num_voie = models.CharField("Numéro de voie", max_length=255, blank=True)
     voie = models.CharField("Nom de la voie", max_length=255, blank=True)
     comp1 = models.CharField("Complément d'adresse 1", max_length=255, blank=True)
     comp2 = models.CharField("Complément d'adresse 2", max_length=255, blank=True)
     lieu_dit = models.CharField("Lieu-dit", max_length=255, blank=True)
     code_postal = models.CharField("Code postal", max_length=255, blank=True)
-    ville = models.CharField("Ville ou localité", max_length=255, blank=True)
+    commune = models.CharField("Ville ou localité", max_length=255, blank=True)
     pays = models.CharField("Pays", max_length=255, blank=True)
 
     date_export = models.DateField("Date de l'export")
@@ -49,21 +48,26 @@ class Electeur(models.Model):
         verbose_name = "électeur"
         constraints = [
             models.UniqueConstraint(
-                fields=["commune", "bureau", "numero"], name="electeur_unique"
+                fields=["code_com", "bureau", "type_liste", "num_electeur"],
+                name="electeur_unique",
             )
         ]
 
-        indexes = [
-            models.Index(
-                "commune",
-                "date_naissance",
-                Upper(Unaccent("nom")),
-                name="recherche_nom_legal",
-            ),
-            models.Index(
-                "commune",
-                "date_naissance",
-                Upper(Unaccent("nom_usage")),
-                name="recherche_nom_usage",
-            ),
-        ]
+
+class EntreeRecherche(models.Model):
+    code_com = models.CharField("Code INSEE commune", max_length=5)
+    date_naissance = models.DateField("Date de naissance")
+    nom = models.CharField("Nom de naissance", max_length=255)
+    prenoms = models.CharField("Prénoms", max_length=255)
+
+    electeur = models.ForeignKey(Electeur, on_delete=models.CASCADE)
+
+    indexes = [
+        models.Index(
+            "code_com",
+            "date_naissance",
+            "nom",
+            "prenoms",
+            name="recherche_electeur",
+        )
+    ]
