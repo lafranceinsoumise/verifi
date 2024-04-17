@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class ListType(models.TextChoices):
+class TypeListe(models.TextChoices):
     PRINCIPALE = "LP", "Liste principale"
     EURO = "LCE", "Liste complémentaire européennes"
     MUNI = "LCM", "Liste complémentaire municipales"
@@ -17,7 +17,7 @@ class Electeur(models.Model):
     bureau = models.CharField("Bureau", max_length=10)
     num_electeur = models.IntegerField("Numéro dans la liste")
     type_liste = models.CharField(
-        "Type de liste", max_length=3, choices=ListType.choices
+        "Type de liste", max_length=3, choices=TypeListe.choices
     )
 
     sexe = models.CharField("Civilité", max_length=1, choices=Civilite.choices)
@@ -56,18 +56,26 @@ class Electeur(models.Model):
 
 class EntreeRecherche(models.Model):
     code_com = models.CharField("Code INSEE commune", max_length=5)
-    date_naissance = models.DateField("Date de naissance")
+    date_naissance = models.CharField("Date de naissance")
     nom = models.CharField("Nom de naissance", max_length=255)
     prenoms = models.CharField("Prénoms", max_length=255)
 
     electeur = models.ForeignKey(Electeur, on_delete=models.CASCADE)
+    nom_usage = models.BooleanField("Nom d'usage")
 
-    indexes = [
-        models.Index(
-            "code_com",
-            "date_naissance",
-            "nom",
-            "prenoms",
-            name="recherche_electeur",
-        )
-    ]
+    class Meta:
+        managed = False
+        indexes = [
+            models.Index(
+                "code_com",
+                "date_naissance",
+                "nom",
+                "prenoms",
+                name="recherche_electeur",
+            )
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("electeur", "nom_usage"), name="unique_electeur_index"
+            )
+        ]
