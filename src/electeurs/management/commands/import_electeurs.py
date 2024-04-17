@@ -90,9 +90,11 @@ class Command(BaseCommand):
         parser.add_argument("files", type=Path, nargs="+")
 
     def handle(self, files, **options):
-        with tqdm(files) as file_bar, connection.cursor() as cursor:
+        with tqdm(
+            files, postfix={"fichier": files[0].name}
+        ) as file_bar, connection.cursor() as cursor:
             self.cursor = cursor
-            for file in tqdm(files, postfix={"fichier": files[0].name}):
+            for file in file_bar:
                 file_bar.set_postfix(fichier=file.name)
                 self.handle_file(file)
 
