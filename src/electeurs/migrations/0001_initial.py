@@ -141,42 +141,11 @@ class Migration(migrations.Migration):
                 "verbose_name": "électeur",
             },
         ),
-        migrations.CreateModel(
-            name="EntreeRecherche",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "code_com",
-                    models.CharField(max_length=5, verbose_name="Code INSEE commune"),
-                ),
-                ("date_naissance", models.DateField(verbose_name="Date de naissance")),
-                (
-                    "nom",
-                    models.CharField(max_length=255, verbose_name="Nom de naissance"),
-                ),
-                ("prenoms", models.CharField(max_length=255, verbose_name="Prénoms")),
-            ],
-        ),
         migrations.AddConstraint(
             model_name="electeur",
             constraint=models.UniqueConstraint(
                 fields=("code_com", "bureau", "type_liste", "num_electeur"),
                 name="electeur_unique",
-            ),
-        ),
-        migrations.AddField(
-            model_name="entreerecherche",
-            name="electeur",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="electeurs.electeur"
             ),
         ),
     ]

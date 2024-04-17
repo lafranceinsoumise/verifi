@@ -44,38 +44,37 @@ class Electeur(models.Model):
 
     date_export = models.DateField("Date de l'export")
 
+    def __str__(self):
+        nom = self.nom.upper()
+        if self.nom_usage and self.nom_usage.upper() != self.nom.upper():
+            nom = f"{nom} ({self.nom_usage.upper()})"
+
+        complement = self.date_naissance
+        if self.type_liste != TypeListe.PRINCIPALE:
+            complement = f"{complement}, {self.type_liste}"
+
+        return f"{nom} {self.prenoms} ({complement})"
+
+    def __repr__(self):
+        return f"<Electeur(code_com={self.code_com!r}, date_naissance={self.date_naissance!r}, nom={self.nom!r}, prenoms={self.prenoms!r})>"
+
+    def to_json(self):
+        return {
+            "nom": self.nom,
+            "nom_usage": self.nom_usage,
+            "prenoms": self.prenoms,
+            "date_naissance": self.date_naissance,
+            "type_liste": self.type_liste,
+            "code_com": self.code_com,
+            "bureau": self.bureau,
+            "num_electeur": self.num_electeur,
+        }
+
     class Meta:
         verbose_name = "électeur"
         constraints = [
             models.UniqueConstraint(
                 fields=["code_com", "bureau", "type_liste", "num_electeur"],
                 name="electeur_unique",
-            )
-        ]
-
-
-class EntreeRecherche(models.Model):
-    code_com = models.CharField("Code INSEE commune", max_length=5)
-    date_naissance = models.CharField("Date de naissance")
-    nom = models.CharField("Nom de naissance", max_length=255)
-    prenoms = models.CharField("Prénoms", max_length=255)
-
-    electeur = models.ForeignKey(Electeur, on_delete=models.CASCADE)
-    nom_usage = models.BooleanField("Nom d'usage")
-
-    class Meta:
-        managed = False
-        indexes = [
-            models.Index(
-                "code_com",
-                "date_naissance",
-                "nom",
-                "prenoms",
-                name="recherche_electeur",
-            )
-        ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=("electeur", "nom_usage"), name="unique_electeur_index"
             )
         ]
