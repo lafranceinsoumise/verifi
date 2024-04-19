@@ -12,8 +12,7 @@ def verifier_electeur_view(request):
 
         if not f.is_valid():
             return JsonResponse(
-                {"status": "error", "type": "wrong inputs", "errors": f.errors},
-                status=400,
+                {"status": "invalide", "errors": f.errors},
             )
 
         if not verifier_commune(f.cleaned_data["code_com"]):
@@ -26,4 +25,4 @@ def verifier_electeur_view(request):
 
         return JsonResponse({"status": "inscrit", "electeur": electeur.to_json()})
 
-    return JsonResponse({"status": "error", "type": "wrong method"})
+    return JsonResponse({"status": "error", "type": "wrong method"}, status=405)
