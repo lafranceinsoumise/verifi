@@ -16,6 +16,7 @@ WHERE
   AND r.date_naissance = %(date_naissance)s
   AND r.nom = UPPER(UNACCENT(%(nom)s))
   AND r.prenoms = UPPER(UNACCENT(%(prenoms)s))
+  AND e.sexe = %(sexe)s
   AND e.type_liste IN %(type_liste)s
 LIMIT 1
 """
@@ -50,7 +51,9 @@ def verifier_commune(code_com):
         return bool(cursor.fetchone())
 
 
-def verifier_electeur(code_com, date_naissance, nom, prenoms, election: TypeElection):
+def verifier_electeur(
+    code_com, date_naissance, nom, prenoms, sexe, election: TypeElection
+):
     raw = Electeur.objects.raw(
         REQUETE_CHERCHER_ELECTEUR,
         {
@@ -58,6 +61,7 @@ def verifier_electeur(code_com, date_naissance, nom, prenoms, election: TypeElec
             "date_naissance": date_naissance,
             "nom": nom,
             "prenoms": prenoms,
+            "sexe": sexe,
             "type_liste": ELECTIONS[election],
         },
     )

@@ -2,6 +2,7 @@ from django import forms
 from django.core import validators
 
 from electeurs.actions import TypeElection
+from electeurs.models import Civilite
 
 
 class RechercheElecteurForm(forms.Form):
@@ -13,6 +14,9 @@ class RechercheElecteurForm(forms.Form):
     )
     nom = forms.CharField(label="Nom de famille (ou d'usage", required=True)
     prenoms = forms.CharField(label="Prénoms (tous)", required=True)
+    sexe = forms.ChoiceField(
+        label="Sexe à l'état civil", choices=Civilite.choices, required=True
+    )
     election = forms.ChoiceField(
         label="Scrutin",
         choices=[(e, e) for e in TypeElection],

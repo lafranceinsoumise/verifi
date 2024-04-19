@@ -68,6 +68,7 @@ class Electeur(models.Model):
             "code_com": self.code_com,
             "bureau": self.bureau,
             "num_electeur": self.num_electeur,
+            "date_export": self.date_export,
         }
 
     class Meta:
