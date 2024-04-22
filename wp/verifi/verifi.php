@@ -23,6 +23,7 @@ class Plugin
     {
         add_action('init', [$this, 'admin_init']);
         add_action('elementor_pro/init', [$this, 'register_elementor_addons']);
+        add_shortcode('verifi', [$this, 'shortcode_handler']);
     }
 
     public function admin_init()
@@ -42,6 +43,10 @@ class Plugin
             ->add_form_action($elementor_verifi_action->get_name(), $elementor_verifi_action);
     }
 
+    public function shortcode_handler( $atts, $content, $tag ) {
+        require_once dirname(__FILE__) . '/verifi-shortcode.php';
+        return verifi_shortcode( $atts );
+    }
 
 }
 
