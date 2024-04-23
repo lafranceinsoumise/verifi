@@ -58,6 +58,7 @@ function verifi_shortcode( $atts ) {
     switch( $result['status'] ) {
       case 'commune manquante':
         return <<<EOM
+<div class="commune-manquante">
 <p>
 Malheureusement, <strong>la préfecture refuse pour le moment de nous transmettre les listes
 électorales pour votre commune</strong>. Nous mettrons à jour l'application dès que nous
@@ -67,10 +68,13 @@ pourrons la récupérer.
 En attendant, <a href="https://www.service-public.fr/particuliers/vosdroits/R51788">vous pouvez faire usage du service proposé par l'État</a>,
 mais il vous faudra vous créer un compte spécifique.
 </p>
+<a class="action" href="https://www.service-public.fr/particuliers/vosdroits/R51788">Accéder au service officiel pour vérifier son inscription</a>
+</div>
 EOM;
 
       case 'pas inscrit':
         return <<<EOM
+<div class="pas-inscrit">
 <p>
 Nous ne parvenons pas à trouver vos informations dans la liste électorale de cette commune.
 <strong>Vous n'êtes potentiellement pas inscrit·e.</strong><br>
@@ -82,19 +86,22 @@ tous les prénoms qui figurent sur vos papiers pour pouvoir trouver votre inscri
 <p>
 S'il s'avère que vous n'êtes pas inscrits, <strong>vous avez jusqu'au 1er mai pour <a href="https://www.service-public.fr/particuliers/vosdroits/R16396">vous inscrire sur internet</a> et jusqu'au 3 mai pour vous inscrire en mairie.</strong>
 </p>
-
+<a class="action" href="https://www.service-public.fr/particuliers/vosdroits/R16396">Je m'inscris sur les listes électorales en ligne</a>
+</div>
 EOM;
 
     case 'inscrit':
         $bureau = $result['electeur']['bureau'];
         $numero = $result['electeur']['num_electeur'];
         return <<<EOM
+<div class="inscrit">
 <p>
-<strong>Nous avons pu trouver votre inscription sur les listes électorales de cette commune.</strong>
+Nous avons pu trouver votre inscription sur les listes électorales de cette commune. <strong>Vous êtes correctement inscrit·e sur les listes électorales.</strong>
 </p>
 <p>
-Vous voterez au bureau n° $bureau, avec le numéro d'électeur·ice $numero.
+Le jour du scrutin, vous voterez au bureau n°$bureau, avec le numéro d'électeur·ice $numero.
 </p>
+</div>
 EOM;
 
     default:
